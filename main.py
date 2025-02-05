@@ -4,6 +4,7 @@ import numpy as np
 import pyautogui
 import time
 import logging
+import requests
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QImage, QPixmap, QFont
 from PyQt6.QtWidgets import (
@@ -38,6 +39,45 @@ template_h, template_w, _ = template.shape
 ticker_symbol_offset = (-480, -80, 62, 18)
 qty_value_offset = (-70, -20, 62, 18)
 pos_flat_offset = (50, 57, 62, 18)
+
+# --- Alpaca API Settings ---
+ALPACA_API_KEY = "your_alpaca_api_key"         # Replace with your Alpaca API key
+ALPACA_SECRET_KEY = "your_alpaca_secret_key"     # Replace with your Alpaca secret key
+ALPACA_ORDERS_URL = "https://paper-api.alpaca.markets/v2/orders"  # Using the paper trading endpoint
+
+def place_alpaca_order(ticker, order_qty, side):
+    """
+    Places a market order on Alpaca.
+    
+    Parameters:
+    - ticker: The ticker symbol to trade.
+    - order_qty: The quantity of shares to trade (must be positive).
+    - side: 'buy' or 'sell' indicating the side of the order.
+    """
+    try:
+        if order_qty <= 0:
+            logging.info("Order quantity is zero or negative; no order will be placed.")
+            return
+
+        payload = {
+            "symbol": ticker,
+            "qty": order_qty,
+            "side": side,
+            "type": "market",
+            "time_in_force": "gtc"
+        }
+
+        headers = {
+            "APCA-API-KEY-ID": ALPACA_API_KEY,
+            "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(ALPACA_ORDERS_URL, json=payload, headers=headers)
+        response.raise_for_status()  # Will raise an error for bad HTTP status codes
+        logging.info(f"Alpaca {side} order placed: {response.json()}")
+    except Exception as e:
+        logging.error(f"Error placing Alpaca {side} order: {e}")
 
 class OCRWorker(QThread):
     update_signal = pyqtSignal(str, str, str, float, np.ndarray, np.ndarray, np.ndarray)
