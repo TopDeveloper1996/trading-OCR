@@ -4,6 +4,7 @@ import numpy as np
 import pyautogui
 import time
 import logging
+import re
 import requests
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QImage, QPixmap, QFont
@@ -159,8 +160,8 @@ class OCRWorker(QThread):
 
                 # Combine texts in each row (if there are multiple detections per ROI)
                 ticker_text   = ' '.join(rows[0]) if rows[0] else "No text"
-                qty_text      = ' '.join(rows[1]) if rows[1] else "No text"
-                pos_flat_text = ' '.join(rows[2]) if rows[2] else "No text"
+                qty_text      = re.sub(r'\D', '', ' '.join(rows[1]) if rows[1] else "0")
+                pos_flat_text = re.sub(r'\D', '', ' '.join(rows[2]) if rows[2] else "0")
 
                 processing_time = time.time() - start_time
                 self.update_signal.emit(ticker_text, qty_text, pos_flat_text, processing_time, ticker_roi, qty_roi, pos_flat_roi)
