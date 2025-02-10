@@ -86,6 +86,7 @@ class OCRWorker(QThread):
         super().__init__()
         self.running = False
         self.template_found = False
+        self.template_coordinates = []
 
     def run(self):
         while self.running:
@@ -97,7 +98,7 @@ class OCRWorker(QThread):
                 # Template matching
                 if self.template_found is False:
                     result = cv2.matchTemplate(screen_np, template, cv2.TM_CCOEFF_NORMED)
-                    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+                    _, max_val, _, self.template_coordinates = cv2.minMaxLoc(result)
 
                     if max_val < 0.8:
                         logging.info("Template not found on screen.")
@@ -114,7 +115,7 @@ class OCRWorker(QThread):
                         continue
                     self.template_found = True
 
-                x, y = max_loc
+                x, y = self.template_coordinates
 
                 # Function to extract ROI using offset
                 def extract_roi(offset):
